@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  crm-app:
+    build: .
+    container_name: crm-app-container
+    restart: always
+    env_file: .env
+    networks:
+      - project_app-network # WAJIB pakai ini agar bisa konek ke postgres-db asli
+    labels:
+      - "traefik.enable=true"
+      # Gunakan domain CRM kamu
+      - "traefik.http.routers.crm-ibmp.rule=Host(`crm.ibmpgroup.com`)"
+      - "traefik.http.routers.crm-ibmp.entrypoints=websecure"
+      - "traefik.http.routers.crm-ibmp.tls=true"
+      - "traefik.http.routers.crm-ibmp.tls.certresolver=myresolver"
+      - "traefik.http.services.crm-ibmp.loadbalancer.server.port=3000"
+
+networks:
+  project_app-network: # Network yang isinya database & traefik yang sudah ada
+    external: true

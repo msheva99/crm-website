@@ -1,0 +1,29 @@
+# Stage 1: Builder
+FROM node:18-alpine AS builder
+WORKDIR /app
+COPY package*.json ./
+# Menggunakan npm ci lebih stabil untuk production jika ada package-lock.json
+RUN npm install
+COPY . .
+RUN npm run build
+
+# Stage 2: Runner
+FROM node:18-alpine AS runner
+WORKDIR /app
+
+# Set environment ke production agar Next.js lebih cepat
+ENV NODE_ENV=production
+
+# Copy semua file config yang mungkin ada (js, mjs, atau ts)
+COPY --from=builder /app/next.config.* ./
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next ./.next
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./package.json
+
+# Jalankan sebagai user non-root agar lebih aman (optional tapi disarankan)
+# RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
+# USER nextjs
+
+EXPOSE 3000
+CMD ["npm", "start"]
